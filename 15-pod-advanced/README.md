@@ -68,7 +68,7 @@ pass  user
 root 
 ```
 
-## Task 2: 使用liveness保活关键进程
+## Task 2: 自定义livenessProbe （健康检查）保活关键进程
 创建 pod yaml文件： liveness-pod.yaml
 
 ```
@@ -81,4 +81,38 @@ kubectl describe pods test-liveness-exec
 
 **注意到events中出现了 Unhealthy/Pulled/Created/Killing/Started 序列，说明被重启成功**
 
-**todo:** 增加保活逻辑
+FirstSeen LastSeen    Count   From            SubobjectPath           Type        Reason      Message
+--------- --------    -----   ----            -------------           --------    ------      -------
+2s        2s      1   {kubelet worker0}   spec.containers{liveness}   Warning     Unhealthy   Liveness probe failed: cat: can't open '/tmp/healthy': No such file or directory
+
+## task 3: Pod 运行起来之后，我们查看一下这个 Pod 的 API 对象信息
+
+```
+$ kubectl create -f pod.yaml
+
+$ kubectl get pod website -o yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: website
+  labels:
+    app: website
+    role: frontend
+  annotations:
+    podpreset.admission.kubernetes.io/podpreset-allow-database: "resource version"
+spec:
+  containers:
+    - name: website
+      image: nginx
+      volumeMounts:
+        - mountPath: /cache
+          name: cache-volume
+      ports:
+        - containerPort: 80
+      env:
+        - name: DB_PORT
+          value: "6379"
+  volumes:
+    - name: cache-volume
+      emptyDir: {}
+```      
